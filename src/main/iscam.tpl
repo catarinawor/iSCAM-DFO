@@ -4484,9 +4484,18 @@ REPORT_SECTION
 	{
 		report<<1.0-exp(-ft(ig))<<'\n';
 	}
-	REPORT(M);
-	REPORT(F);
-	REPORT(Z);
+	if(!delaydiff){
+		REPORT(M);
+		REPORT(F);
+		REPORT(Z);
+	}else{
+		REPORT(M_dd);
+		REPORT(F_dd);
+		REPORT(Z_dd);
+		REPORT(numbers);
+		REPORT(biomass);
+	}
+	
 
 	// |---------------------------------------------------------------------------------|
 	// | STOCK-RECRUITMENT
