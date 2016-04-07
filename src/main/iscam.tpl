@@ -3023,7 +3023,7 @@ FUNCTION calcTotalMortality_deldiff
 FUNCTION calcNumbersBiomass_deldiff
     {
     	/**
-  	Purpose: This function calculates  total biomass and total numbers according to the delay difference 
+  	Purpose: This function calculates  total biomass and total numbers according to the delay differnce 
   	model equations from Hilborn and Walters. Quantities are calculated for each year and area*sex*group
   	Author: Catarina Wor - Adapted from Robyn Forrest work.
   	
@@ -5463,7 +5463,7 @@ REPORT_SECTION
 		  for(ii=1;ii<=n_tac;ii++){
         //LOG<<ii<<" "<<tac(ii)<<'\n';
 		   	if (!delaydiff) projection_model(tac(ii));
-		   	if(delaydiff) 	projection_model_dd(tac(ii));
+		   	//if(delaydiff) 	projection_model_dd(tac(ii));
 		 	}
 		 }
 		 if(n_ags>1){
@@ -5991,7 +5991,6 @@ FUNCTION void projection_model(const double& tac);
   int i,k;
   int pyr = nyr+1;
   BaranovCatchEquation cBaranov;
-  
   // | (2) : Average weight and mature spawning biomass for reference years  (copied from calcReferencePoints() but only implemented for ig=1)
   // |     : dWt_bar(1,n_ags,sage,nage)
   dvector fa_bar(sage,nage);
@@ -5999,8 +5998,7 @@ FUNCTION void projection_model(const double& tac);
   fa_bar = elem_prod(dWt_bar(1),ma(1));
   M_bar  = colsum(value(M(1).sub(pf_cntrl(3),pf_cntrl(4))));
   M_bar /= pf_cntrl(4)-pf_cntrl(3)+1;
-  
-  // --derive stock recruitment parameters
+  // --derive stock re4cruitment parameters
   // --survivorship of spawning biomass
   dvector lx(sage,nage);
   double  tau = value(sqrt(1.-rho)*varphi);
@@ -6165,7 +6163,7 @@ FUNCTION void projection_model_dd(const double& tac);
 	int i;
 	int pyr = nyr+2;	//projection year. 
 
-	BaranovCatchEquation cBaranov;
+	 BaranovCatchEquation cBaranov;
 	     
 	//get parameters - convert to data objects
 	//double pbo   = value(bo(1));
@@ -6197,7 +6195,7 @@ FUNCTION void projection_model_dd(const double& tac);
 	int nlong=pf_cntrl(8)-syr+1;
 	double meanfshort;	  // average F between 1956 and 2004
 	double meanflong;	    // average F between 1956 and 2012
-	double meanbshort;	 // average B between 1956 and 2004
+	 double meanbshort;	 // average B between 1956 and 2004
 	double meanblong;	  // average B between 1956 and 2012
 	double minb;	  // biomass in 1971 for 5CD or 1985 for 5AB
 
@@ -6207,6 +6205,8 @@ FUNCTION void projection_model_dd(const double& tac);
 	dvector hist_btlong(syr,pf_cntrl(8));
     hist_ftshort.initialize();  hist_ftlong.initialize();
 	hist_btshort.initialize();  hist_btlong.initialize();
+
+		
 
 	hist_ftshort=value(ft(1)(1)(syr,pf_cntrl(7)));
 	hist_btshort=value(biomass(1)(syr,pf_cntrl(7)));
@@ -6224,8 +6224,8 @@ FUNCTION void projection_model_dd(const double& tac);
 	if(nyr>=pf_cntrl(8)) meanblong=sum(hist_btlong)/nlong;
 	
 
-	// Question CW - Where does 1985 comes from, is it the minimum biomass observed or is it a set number?
-	minb=hist_btshort(pf_cntrl(9));
+	// Question CW - Where does 1985 comes from, it it the minimum biomass observed or is it a set number?
+	minb=hist_btshort(1985);
 
 	/* Simulate population into the future under constant tac policy. */
 	
