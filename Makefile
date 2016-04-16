@@ -24,21 +24,23 @@
 ## The iscam.dat file is just a copy of the iscam_arrowtooth.dat file,
 ## so that iscam can be tested immediately after building.
 
-ADMB_HOME=/Users/catarinawor/admb-trunk/build/dist
-ADMB_HOME_DEBUG= /Users/catarinawor/admb-trunk/build/dist
-
-
 COMPILER := g++
 
 .PHONY: clean clean-debug rules testcompiler
 
-all: dist debug
+all: debug dist
 
 dist: testcompiler
 	$(MAKE) dist --directory=src COMPILER=$(COMPILER)
+	@echo
+	@echo iSCAM distribution version built successfully.
+	@echo
 
 debug: testcompiler
 	$(MAKE) debug --directory=src COMPILER=$(COMPILER)
+	@echo
+	@echo iSCAM debug version built successfully.
+	@echo
 
 clean-dist:
 	$(MAKE) clean-dist --directory=src

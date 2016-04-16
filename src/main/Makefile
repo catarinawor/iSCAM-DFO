@@ -3,10 +3,6 @@
 ## **Make sure to set up the ADMB_HOME and ADMB_HOME_DEBUG
 ##  environment variables for debug and dist builds of ADMB on your system
 
-ADMB_HOME=/Users/catarinawor/admb-trunk/build/dist
-ADMB_HOME_DEBUG= /Users/catarinawor/admb-trunk/build/dist
-
-
 ifeq ($(DEBUG),yes)
 ADMB          := $(ADMB_HOME_DEBUG)
 DESTDIR       := ../../build/debug/
@@ -38,7 +34,9 @@ LINKER := g++
 OBJECTS := $(addprefix $(OBJDIR), $(OBJS))
 
 all: $(EXEC)
-	@echo iscam build completed, DEBUG = $(DEBUG)
+	@echo
+	@echo iSCAM main code built successfully, DEBUG = $(DEBUG)
+	@echo
 
 $(EXEC): $(OBJECTS)
 	$(LINKER) $(LINKERFLAGS) -o $@ $^ $(LIBOBJS) -L$(ADMB)/lib $(LINKERLIBS)

@@ -3,16 +3,13 @@
 ## **Make sure to set up the ADMB_HOME and ADMB_HOME_DEBUG
 ##  environment variables for debug and dist builds of ADMB on your system
 
-## ADMB_HOME=/Users/catarinawor/admb-trunk/build/dist
-## ADMB_HOME_DEBUG= /Users/catarinawor/admb-trunk/build/dist
-
 dist:
 	$(MAKE) --directory=libs DEBUG=no COMPILER=$(COMPILER)
 	$(MAKE) --directory=main DEBUG=no COMPILER=$(COMPILER)
 	-rm -rf ../build/dist/examples
 	-cp -rf ../examples ../build/dist/examples
 	-mv ../build/dist/examples/*.* ../build/dist/bin
-	-cp ../build/dist/bin/iscam.dat 
+	-cp ../build/dist/bin/iscam_arrowtooth.dat ../build/dist/bin/iscam.dat
 
 debug:
 	$(MAKE) --directory=libs DEBUG=yes COMPILER=$(COMPILER)
