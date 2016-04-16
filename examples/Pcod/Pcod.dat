@@ -46,7 +46,7 @@
 ## ------------------------------------------------------------------------- ##
 ## DELAY DIFFERENCE DATA                                                     ##
 ## ------------------------------------------------------------------------- ##
-## these parameters are sex and group specific
+## these parameters are group, sex and area specific
 2        # kage
 1.4054   #alpha_g
 0.8376   #rho_g

@@ -10,7 +10,7 @@
 ## _____________________________ ##
 ## Control options               ##
 ## _____________________________ ##
-8    ## Length of control options vector
+9   ## Length of control options vector
 
 1956 ## - 1) Start year for mean natural mortality rate
 2013 ## - 2)  Last year for mean natural mortality rate
@@ -24,6 +24,7 @@
 2004 ## - 7)Short time series: "historical" control points based on biomass and F reconstruction
 2012 ## - 8)Long time series:"historical" control points based on biomass and F reconstruction
 
+1985 ## year of minimum biomass to be used as a historical reference point.
 
 ## eof
 -999
