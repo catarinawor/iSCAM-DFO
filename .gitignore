@@ -9,12 +9,12 @@
 *.exe
 *.o
 *.so
-#*.cpp
+*.cpp
 *.htp
 *.obj
 variance
 dist/
-*.BAT
+#*.BAT
 build/
 
 # iSCAM output
