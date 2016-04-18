@@ -352,15 +352,15 @@ DATA_SECTION
 	//=======================================================================================
 	
 	//age at knife-edge recruitment 
-	init_ivector kage(1,n_gs); 
+	init_ivector kage(1,n_ags); 
 	
     //DD growth parameters :: RF (02-Apr-2013)
-    init_vector alpha_g(1,n_gs);  //growth alpha (intercept of Ford-Walford plot; derived from wk and wk-1, H&W 1992, p 334)
+    init_vector alpha_g(1,n_ags);  //growth alpha (intercept of Ford-Walford plot; derived from wk and wk-1, H&W 1992, p 334)
 	
 	//growth rho (slope of Ford-Walford plot; H&W 1992, p 332)
-	init_vector rho_g(1,n_gs);  
+	init_vector rho_g(1,n_ags);  
 
-  	init_vector wk(1,n_gs);
+  	init_vector wk(1,n_ags);
 
 
 	// |---------------------------------------------------------------------------------|
@@ -1534,7 +1534,7 @@ PARAMETER_SECTION
 
 	vector snat(1,n_gs); 	//natural survival
 	vector sfished(1,n_ags); 	//natural survival
-  	vector wbar(1,n_gs); 
+  	vector wbar(1,n_ags); 
 	matrix numbers(1,n_ags,syr,nyr+1);
 	matrix biomass(1,n_ags,syr,nyr+1);//RF added biomass in the delay difference model - in the ASM this is set to spawning biomass
 	matrix vbcom(1,n_ags,syr,nyr); 		//RF added vulnerable biomass in gear 1 - commercial fishery
@@ -2936,7 +2936,7 @@ FUNCTION calcNumbersBiomass_deldiff
   	TODO list:
   	
   	*/
-  	int g,h, gs;
+  	int  ig,g,h, gs;
   	//int j;
   	numbers.initialize();
   	biomass.initialize();
@@ -2945,6 +2945,8 @@ FUNCTION calcNumbersBiomass_deldiff
   	sfished.initialize();
   	snat.initialize();
   	wbar.initialize();
+  	no.initialize();
+	bo.initialize();  //RFUpdate added this
         
   	//DD initialization
         //Equilibrium mean weight - obtained from weq = Beq/Neq and solving for weq
@@ -2954,20 +2956,36 @@ FUNCTION calcNumbersBiomass_deldiff
 	
 	//take the average of natural mortality for both sexes
 	snat = mfexp(-m);
-	wbar= elem_div(elem_prod(snat,alpha_g)+elem_prod(wk,(1.-snat)),(1.-elem_prod(rho_g,snat)));	
-	// need to change this by multiplying quantities by 0.5 instead of taking the mean
-	no.initialize();
-	bo.initialize();  //RFUpdate added this
-	// average sexes for unfished quantities
+
+
+	int ih,ig;	
+	for(ig=1;ig<=n_ags;ig++)
+	{
+		f  = n_area(ig);
+		g  = n_group(ig);
+		h  = n_sex(ig);
+		//ih = pntr_ag(f,g);
+		gs = pntr_gs(g,h);
+	    
+	    dvar_vector tmp_N(sage,nage);
+	    tmp_N.initialize();
+
+	   
+	   	//Equilibrium mean weight - obtained from weq = Beq/Neq and solving for weq
+		//i.e. weq = [surv(alpha.Neq + rho.Beq + wk.R] / [surv.Neq + R]
+		// with substitutions Neq = Beq/weq and R = Neq(1 - surv)
+		//From SJDM, also used by Sinclair in 2005 p cod assessment
+	
+	    wbar(ig)= (snat(gs)*alpha_g(ig)+wk(ig)*(1.-snat(gs)))/(1.-elem_prod(rho_g(ig),snat(gs)));	
+	
+	   
+		//H&W 1992 p339
+		no(g) +=  (ro(g)*1./nsex)/(1.-snat(gs));
+		bo(g) +=  (ro(g)*1./nsex)/(1.-snat(gs)) * wbar(ig);		
+	}
+	
 	for(g=1; g<=ngroup; g++)
 	{
-		for(h=1; h<=nsex;h++)
-		{
-			gs = pntr_gs(g,h);
-			//H&W 1992 p339
-			no(g) +=  (ro(g)*1./nsex)/(1.-snat(gs));
-			bo(g) +=  (ro(g)*1./nsex)/(1.-snat(gs)) * wbar(gs);		
-		}
 		so(g) 	  = kappa(g)*(ro(g)/bo(g));  
 		switch(int(d_iscamCntrl(2)))
 		{
@@ -2980,6 +2998,12 @@ FUNCTION calcNumbersBiomass_deldiff
 			break;
 		}	
 	}
+
+	//wbar(ig)= elem_div(elem_prod(snat,alpha_g(ig))+elem_prod(wk,(1.-snat)),(1.-elem_prod(rho_g,snat)));	
+	// need to change this by multiplying quantities by 0.5 instead of taking the mean
+	
+	// average sexes for unfished quantities
+	
 		
 	/*
 	cout<<"m snat wbar ro no bo"<<endl;
@@ -3002,8 +3026,9 @@ FUNCTION calcNumbersBiomass_deldiff
 		h  = n_sex(ig);
 		ih = pntr_ag(f,g);
 		gs = pntr_gs(g,h);
-	        dvar_vector tmp_N(sage,nage);
-	        tmp_N.initialize();
+	    
+	    dvar_vector tmp_N(sage,nage);
+	    tmp_N.initialize();
 						
 		switch(int(d_iscamCntrl(5)))
 		{
@@ -3013,12 +3038,14 @@ FUNCTION calcNumbersBiomass_deldiff
 				{
 					tmp_N(j)=mfexp(log_recinit(ih)+init_log_rec_devs(ih)(j))*mfexp(-M_dd(ig)(syr)*(j-sage));
 				}
-		        	tmp_N(nage)/=(1.-mfexp(-M_dd(ig)(syr)));
-		        	numbers(ig,syr) = sum(tmp_N)* 1./nsex;
-		        	log_rt(ih,syr) = log_avgrec(ih)+log_rec_devs(ih,syr); 
+		        tmp_N(nage)/=(1.-mfexp(-M_dd(ig)(syr)));
+		        numbers(ig,syr) = sum(tmp_N)* 1./nsex;
+		        log_rt(ih,syr) = log_avgrec(ih)+log_rec_devs(ih,syr); 
+				
 				//RFUpdate Correction: below biomass is the sum of weight at age x numbers at age not wbar
 				biomass(ig,syr) = sum(elem_prod(tmp_N,d3_wt_avg(ig)(syr))); 
 				annual_mean_wt(ig,syr) = biomass(ig,syr)/numbers(ig,syr); //wbar(gs);
+			
 			break;
 		
 			case 1: //start at equilibrium unfished  //check these two options are the same in the absence of fishing mortality
@@ -3035,30 +3062,31 @@ FUNCTION calcNumbersBiomass_deldiff
  
 			case 2: //start at equilibrium with fishing mortality - delay difference. CHECK THIS
 	  		  	sfished(ig) = surv(ig,syr); //equilibrium survivorship at initial fishing mortality (gear 1 commercial fishery)
-	   		  	annual_mean_wt(ig,syr) = (sfished(ig)*alpha_g(gs) + wk(gs)*(1.-sfished(ig)))/(1-rho_g(gs)*sfished(ig));
+	   		  	annual_mean_wt(ig,syr) = (sfished(ig)*alpha_g(ig) + wk(ig)*(1.-sfished(ig)))/(1-rho_g(ig)*sfished(ig));
 	   		  								
-	   		  	biomass(ig,syr) = -(annual_mean_wt(ig,syr)*(wk(gs)*so(g)-1)+sfished(ig)*(alpha_g(gs)+
-	   		  						rho_g(gs)* annual_mean_wt(ig,syr)))/
-	   		  						(beta(g)*(sfished(ig)*alpha_g(gs)+sfished(ig)*rho_g(gs)* annual_mean_wt(ig,syr)- 
+	   		  	biomass(ig,syr) = -(annual_mean_wt(ig,syr)*(wk(ig)*so(g)-1)+sfished(ig)*(alpha_g(ig)+
+	   		  						rho_g(ig)* annual_mean_wt(ig,syr)))/
+	   		  						(beta(g)*(sfished(ig)*alpha_g(ig)+sfished(ig)*rho_g(ig)* annual_mean_wt(ig,syr)- 
 	   		  							annual_mean_wt(ig,syr)));
 	   		  	numbers(ig,syr) = biomass(ig,syr)/annual_mean_wt(ig,syr);
 	   		  	numbers(ig,i)/=nsex;
 	   		  	
-	   		  	//pergunta: where does the biomass eq comes from?
 	   		  	// log rt originally missing from this option
 	   		  	// chose log_avgrec as placeholder-- dangerous if fishing in first year and before was very high.
 	   		  	log_rt(ih,syr) = log_avgrec(ih);
 	   	 	   	  		
 			break;
 		}
+		
 		sbt(g,syr) += biomass(ig,syr);
+		
 		for(i=syr+1;i<=nyr;i++){
 			
 			log_rt(ih,i)=log_avgrec(ih)+log_rec_devs(ih,i); 
 			//Update biomass and numbers	
 			//RFUpdate Correction: don't divide both numbers and biomass by nsex
-			biomass(ig,i) =surv(ig,i-1)*(rho_g(gs)*biomass(ig,i-1)+alpha_g(gs)*numbers(ig,i-1))+
-								wk(gs)*mfexp(log_rt(ih,i)); // eq. 9.2.5 in HW
+			biomass(ig,i) =surv(ig,i-1)*(rho_g(ig)*biomass(ig,i-1)+alpha_g(ig)*numbers(ig,i-1))+
+								wk(ig)*mfexp(log_rt(ih,i)); // eq. 9.2.5 in HW
 			numbers(ig,i)=surv(ig,i-1)*numbers(ig,i-1)+mfexp(log_rt(ih,i)); 
 			numbers(ig,i)/=nsex;
 			annual_mean_wt(ig,i)=biomass(ig,i)/numbers(ig,i);		//calculate predicted weight in dynamics - possible option to fit to it
@@ -3073,7 +3101,8 @@ FUNCTION calcNumbersBiomass_deldiff
 	}
 	
 	//RFUpdate - added sbo for delay diff model
-	 sbo(g)=bo(g);
+	sbo(g)=bo(g);
+
 	
 	if(verbose){
     LOG<<"**** Ok after calcNumbersBiomass_deldiff ****\n";
@@ -3497,11 +3526,9 @@ FUNCTION calcObjectiveFunction
 	}
 	if( active(log_ft_pars) )
 	{
-		if(!delaydiff){
-			nlvec(1) = dnorm(eta,0.0,sig_c);
-		}else{
-			nlvec_dd(1) = dnorm(eta,0.0,sig_c);
-		}
+		
+		nlvec(1) = dnorm(eta,0.0,sig_c);
+		
 	}
    
 	// |---------------------------------------------------------------------------------|
@@ -3519,11 +3546,7 @@ FUNCTION calcObjectiveFunction
 			sig_it(i) = sig(ig(i))/it_wt(k,i);
 		}
 		
-		if(!delaydiff){
-			nlvec(2,k)=dnorm(epsilon(k),sig_it); 
-		}else{
-			nlvec_dd(2,k)=dnorm(epsilon(k),sig_it);  
-		}
+		nlvec(2,k)=dnorm(epsilon(k),sig_it); 
 	}
 			
 	// |---------------------------------------------------------------------------------|
@@ -3686,11 +3709,9 @@ FUNCTION calcObjectiveFunction
 	{
 		for(g=1;g<=ngroup;g++)
 		{
-			if(!delaydiff){
-				nlvec(4,g) = dnorm(delta(g),tau(g));
-			}else{
-				nlvec_dd(3,g) = dnorm(delta(g),tau(g));		
-			}
+			
+			nlvec(4,g) = dnorm(delta(g),tau(g));
+			
 		}
 	}
 	// |---------------------------------------------------------------------------------|
@@ -3797,16 +3818,14 @@ FUNCTION calcObjectiveFunction
 	// |---------------------------------------------------------------------------------|
 	// | - sig_it     -> vector of standard deviations based on relative wt for survey.
 	// |  init_3darray d3_mean_wt_data(1,nMeanWt,1,nMeanWtNobs,1,7)
-  if(fitMeanWt){
+  	if(fitMeanWt){
 	  for(k=1;k<=nMeanWt;k++){
-		  dvar_vector epsilon_wt = log(annual_mean_weight(k)) - log(obs_annual_mean_weight(k));
-		  if(!delaydiff){
-		  	nlvec(8,k) = dnorm(epsilon_wt,weight_sig(k)); //fit to annual mean weight if fitMeanWt is switched on in the control file
-		  }else{
-		  	nlvec_dd(4,k) = dnorm(epsilon_wt,weight_sig(k)); //fit to annual mean weight if fitMeanWt is switched on in the control file
-		  }
-	  }
-  }
+		dvar_vector epsilon_wt = log(annual_mean_weight(k)) - log(obs_annual_mean_weight(k));
+		  
+		nlvec(8,k) = dnorm(epsilon_wt,weight_sig(k)); //fit to annual mean weight if fitMeanWt is switched on in the control file
+		  
+	  	}
+  	}
   	//cout<<"nlvec "<<nlvec<<endl;
   	//cout<<"end of nlvec "<<endl;
 	// |---------------------------------------------------------------------------------|
@@ -3949,7 +3968,7 @@ FUNCTION calcObjectiveFunction
 				break;
 					
 				case 1:
-					objfun  = sum(nlvec_dd);
+					objfun  = sum(nlvec);
 					objfun += sum(priors);
 					objfun += sum(pvec);
 					objfun += sum(qvec);
