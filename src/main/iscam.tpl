@@ -315,6 +315,7 @@ DATA_SECTION
 	matrix wa(1,n_ags,sage,nage);		//weight-at-age
 	matrix ma(1,n_ags,sage,nage);		//maturity-at-age
 	LOC_CALCS
+
 		if(!mseFlag){
 		  LOG<<setw(8)<<setprecision(4)<<'\n';
 	    LOG<<"| ----------------------- |\n";
@@ -361,7 +362,6 @@ DATA_SECTION
 	init_vector rho_g(1,n_ags);  
 
   	init_vector wk(1,n_ags);
-
 
 	// |---------------------------------------------------------------------------------|
 	// | Historical removal
@@ -1139,12 +1139,7 @@ DATA_SECTION
 	// | ilvec[4]       -> container for recruitment deviations.
 	// | ilvec[5]       -> number of annual mean weight datasets.
 	
-		ivector ilvec_dd(1,4);
 		
-		!! ilvec_dd(1) = 1;
-		!! ilvec_dd(2) = nItNobs;
-		!! ilvec_dd(3) = ngroup;
-		!! ilvec_dd(4) = nMeanWt;
 	// |---------------------------------------------------------------------------------|
 	// | RETROSPECTIVE ADJUSTMENT TO nyrs
 	// |---------------------------------------------------------------------------------|
@@ -1456,7 +1451,6 @@ PARAMETER_SECTION
 	//START_RF_ADD
 	//matrix   nlvec(1,7,1,ilvec);	 // original declaration
 	matrix   nlvec(1,8,1,ilvec);	  //added extra component to objective function to incorporate annual mean weight data (also modified ilvec)
-	matrix   nlvec_dd(1,4,1,ilvec_dd);	  //added extra component to objective function to incorporate annual mean weight data (also modified ilvec)
 	
 	//END_RF_ADD
 
@@ -2908,6 +2902,9 @@ FUNCTION calcTotalMortality_deldiff
 		// m_bar = mean( M_tot.sub(pf_cntrl(1),pf_cntrl(2)) );	      
 	
 	}
+
+    //cout<<"**** OK after  delay diff calcTotalMortality ****"<<endl;
+  	
 	if(verbose){
     LOG<<"**** OK after  delay diff calcTotalMortality ****\n";
   }
@@ -2936,7 +2933,7 @@ FUNCTION calcNumbersBiomass_deldiff
   	TODO list:
   	
   	*/
-  	int  ig,g,h, gs;
+  	int  f, g,h,gs,ih,ig;
   	//int j;
   	numbers.initialize();
   	biomass.initialize();
@@ -2958,7 +2955,7 @@ FUNCTION calcNumbersBiomass_deldiff
 	snat = mfexp(-m);
 
 
-	int ih,ig;	
+	
 	for(ig=1;ig<=n_ags;ig++)
 	{
 		f  = n_area(ig);
@@ -2976,9 +2973,8 @@ FUNCTION calcNumbersBiomass_deldiff
 		// with substitutions Neq = Beq/weq and R = Neq(1 - surv)
 		//From SJDM, also used by Sinclair in 2005 p cod assessment
 	
-	    wbar(ig)= (snat(gs)*alpha_g(ig)+wk(ig)*(1.-snat(gs)))/(1.-elem_prod(rho_g(ig),snat(gs)));	
+	    wbar(ig)= (snat(gs)*alpha_g(ig)+wk(ig)*(1.-snat(gs)))/(1.-(rho_g(ig)*snat(gs)));	
 	
-	   
 		//H&W 1992 p339
 		no(g) +=  (ro(g)*1./nsex)/(1.-snat(gs));
 		bo(g) +=  (ro(g)*1./nsex)/(1.-snat(gs)) * wbar(ig);		
@@ -3018,7 +3014,7 @@ FUNCTION calcNumbersBiomass_deldiff
 	//recruitment for projection year
 	dvar_vector rnplus=mfexp(log_avgrec); //assume recruits nyr+1 average - same as for ASM
               
-	int ih,ig;	
+	
 	for(ig=1;ig<=n_ags;ig++)
 	{
 		f  = n_area(ig);
@@ -3094,8 +3090,9 @@ FUNCTION calcNumbersBiomass_deldiff
 		}	
 	  	  //RF doesn't like this projection step - prefers to stick to projection in projection model - this one calculates recruitment inconsistently with projection model
 	  	
-	  	biomass(ig,nyr+1)=(surv(ig,nyr)*(rho_g(gs)*biomass(ig,nyr)+alpha_g(gs)*numbers(ig,nyr))+wk(gs)*rnplus(ih)/nsex); 
-		numbers(ig,nyr+1)=surv(ig,nyr)*numbers(ig,nyr)+rnplus(ih)/nsex;
+	  	biomass(ig,nyr+1)=(surv(ig,nyr)*(rho_g(ig)*biomass(ig,nyr)+alpha_g(ig)*numbers(ig,nyr))+wk(ig)*rnplus(ih)); 
+		numbers(ig,nyr+1)=surv(ig,nyr)*numbers(ig,nyr)+rnplus(ih);
+		numbers(ig,nyr+1)/=nsex;
 	  	
 	  	sbt(g,nyr+1) += biomass(ig,nyr+1); //set spawning biomass to biomass
 	}
@@ -3107,16 +3104,10 @@ FUNCTION calcNumbersBiomass_deldiff
 	if(verbose){
     LOG<<"**** Ok after calcNumbersBiomass_deldiff ****\n";
   	}
-  	    /*
-  	cout<<"surv is "<<surv<<endl;
-  	cout<<"biomass is "<<biomass<<endl;
-	cout<<"numbers is "<<numbers<<endl;
-	cout<<"sbt is "<<sbt<<endl;
-	cout<<"log_rt is "<<log_rt<<endl;
-	cout<<"log_rec_devs is "<<log_rec_devs<<endl;
-	cout<<"**** Ok after calcNumbersBiomass_deldiff ****"<<endl;
-	//exit(1);
-	*/
+
+  	//cout<<"**** Ok after calcNumbersBiomass_deldiff ****"<<endl;
+  	//exit(1);
+	
  	
   }
 		
@@ -3198,6 +3189,9 @@ FUNCTION calcFisheryObservations_deldiff
 	if(verbose){
     	LOG<<"**** Ok after calcFisheryObservations_deldiff ****\n";
   	}
+
+  	//cout<<"**** Ok after calcFisheryObservations_deldiff ****"<<endl;
+  
         
         /*
         cout<<"eta is "<<eta<<endl;
@@ -3312,6 +3306,10 @@ FUNCTION calcSurveyObservations_deldiff
         if(verbose){
     		LOG<<"**** Ok after calcSurveyObservations_deldiff ****\n";
   	}
+
+  	//cout<<"**** Ok after calcSurveyObservations_deldiff ****"<<endl;
+  	        
+
      }
 		
 FUNCTION calcStockRecruitment_deldiff
@@ -3471,7 +3469,7 @@ FUNCTION calcAnnualMeanWeight_deldiff
   		}
   		//cout<<"annual_mean_weight is "<<annual_mean_weight<<endl;
 		//cout<<"obs_annual_mean_weight is "<<obs_annual_mean_weight<<endl;
-  	//	cout<<"**** Ok after calcAnnualMeanWeight_deldiff ****"<<endl;
+  		//cout<<"**** Ok after calcAnnualMeanWeight_deldiff ****"<<endl;
 		//exit(1);
 	}
 	
@@ -3510,7 +3508,6 @@ FUNCTION calcObjectiveFunction
 // 	double o=1.e-10;
 	
 	nlvec.initialize();
-	nlvec_dd.initialize();
 	
 	// |---------------------------------------------------------------------------------|
 	// | LIKELIHOOD FOR CATCH DATA
@@ -3973,7 +3970,7 @@ FUNCTION calcObjectiveFunction
 					objfun += sum(pvec);
 					objfun += sum(qvec);
 					/*
-					cout<<"nlvec_dd  "<<endl<<nlvec_dd<<endl;
+					cout<<"nlvec  "<<endl<<nlvec<<endl;
 					cout<<"priors  "<<priors<<endl;
 					cout<<"pvec  "<<pvec<<endl;
 					cout<<"qvec  "<<qvec<<endl;
@@ -4950,8 +4947,7 @@ REPORT_SECTION
 	report<<ControlFile<<'\n';
 	report<<ProjectFileControl<<'\n';
 	REPORT(objfun);
-	if(!delaydiff) REPORT(nlvec);
-	if(delaydiff) REPORT(nlvec_dd);
+	REPORT(nlvec);
 	REPORT(ro);
 	dvector rbar=value(exp(log_avgrec));
 	REPORT(rbar);
