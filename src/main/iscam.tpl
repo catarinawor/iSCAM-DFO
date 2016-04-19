@@ -5875,11 +5875,11 @@ FUNCTION void projection_model_dd(const double& tac);
 	
 	int nshort=pf_cntrl(7)-syr+1;
 	int nlong=pf_cntrl(8)-syr+1;
-	double meanfshort;	  // average F between 1956 and 2004
+	double meanfshort;	  	// average F between 1956 and 2004
 	double meanflong;	    // average F between 1956 and 2012
-	 double meanbshort;	 // average B between 1956 and 2004
-	double meanblong;	  // average B between 1956 and 2012
-	double minb;	  // biomass in 1971 for 5CD or 1985 for 5AB
+	double meanbshort;	 	// average B between 1956 and 2004
+	double meanblong;	  	// average B between 1956 and 2012
+	double minb;	  		// biomass in 1971 for 5CD or 1985 for 5AB
 	dvector hist_ftshort(syr,pf_cntrl(7));
 	dvector hist_ftlong(syr,pf_cntrl(8));
 	dvector hist_btshort(syr,pf_cntrl(7));
@@ -5941,32 +5941,32 @@ FUNCTION void projection_model_dd(const double& tac);
 		if(nf==1 && runNo==1)
 		{
 			ofstream ofsP("iscammcmc.proj");
-			ofsP<<"tac" <<setw(6)     <<   "\t";
-			ofsP<<"B_"<<nyr+1 <<setw(6)     <<   "\t";
-			ofsP<<"B_"<<nyr+2<<setw(6)     <<   "\t";
-			ofsP<<"B_"<<nyr+2<<"B_"<<nyr+1 <<setw(6)     <<   "\t";		   //want probability B2015<B2014 - this will be < 1 if true
-			ofsP<<"F_"<<nyr <<setw(6)     <<   "\t";
-			ofsP<<"F_"<<nyr+1 <<setw(6)     <<   "\t";
-			ofsP<<"F_"<<nyr+1<<"F_"<<nyr <<setw(6)     <<   "\t";		   //want probability F2014>F2013     - this will be > 1 if true
+			ofsP<<"tac" <<setw(6)     					<<   "\t";
+			ofsP<<"B_"<<nyr+1 <<setw(6)     			<<   "\t";
+			ofsP<<"B_"<<nyr+2<<setw(6)      			<<   "\t";
+			ofsP<<"B_"<<nyr+2<<"B_"<<nyr+1 <<setw(6)    <<   "\t";		   //want probability Blast<Blast-1 - this will be < 1 if true
+			ofsP<<"F_"<<nyr <<setw(6)     				<<   "\t";
+			ofsP<<"F_"<<nyr+1 <<setw(6)     			<<   "\t";
+			ofsP<<"F_"<<nyr+1<<"F_"<<nyr <<setw(6)    	<<   "\t";		   //want probability Flast-1>Flast-2     - this will be > 1 if true
 			//MSY based ref points
-			ofsP<<"BMSY" <<setw(6)     <<   "\t";
-			ofsP<<"B_"<<nyr+2<<"BMSY" <<setw(6)     <<   "\t";		   //want probability B2015<BMSY - this will be < 1 if true
-			ofsP<<"B_"<<nyr+2<<"0.8BMSY" <<setw(6)     <<   "\t";		   //want probability B2015<0.8BMSY - this will be< 1 if true
-			ofsP<<"B_"<<nyr+2<<"0.4BMSY" <<setw(6)     <<   "\t";		   //want probability B2015<0.4BMSY - this will be < 1 if true
-			ofsP<<"FMSY" <<setw(6)     <<   "\t";
-			ofsP<<"F_"<<nyr+1<<"FMSY"<<setw(6)     <<   "\t";		   //want probability F2014>F2013 - this will be > 1 if true
+			ofsP<<"BMSY" <<setw(6)     					<<   "\t";
+			ofsP<<"B_"<<nyr+2<<"BMSY" <<setw(6)    		<<   "\t";		   //want probability Blast<BMSY - this will be < 1 if true
+			ofsP<<"B_"<<nyr+2<<"0.8BMSY" <<setw(6)     	<<   "\t";		   //want probability Blast<0.8BMSY - this will be< 1 if true
+			ofsP<<"B_"<<nyr+2<<"0.4BMSY" <<setw(6)     	<<   "\t";		   //want probability Blast<0.4BMSY - this will be < 1 if true
+			ofsP<<"FMSY" <<setw(6)     					<<   "\t";
+			ofsP<<"F_"<<nyr+1<<"FMSY"<<setw(6)     		<<   "\t";		   //want probability Flast-1>Flast-2 - this will be > 1 if true
 			//Historical ref points "short"	 1956-2004
-			ofsP<<"Bmin" <<setw(6)     <<   "\t";
-			ofsP<<"B_"<<nyr+2<<"Bmin" <<setw(6)     <<   "\t";		   //want probability B2015<Bmin 
-			ofsP<<"BAvg_S" <<setw(6)     <<   "\t";
-			ofsP<<"B_"<<nyr+2<<"BAvg_S" <<setw(6)     <<   "\t";		   //want probability B2015<Bavg 
-			ofsP<<"FAvg_S" <<setw(6)     <<   "\t";
-			ofsP<<"F_"<<nyr+1<<"FAvg_S"<<setw(6)     <<   "\t";	
+			ofsP<<"Bmin" <<setw(6)    					<<   "\t";
+			ofsP<<"B_"<<nyr+2<<"Bmin" <<setw(6)     	<<   "\t";		   //want probability Blast<Bmin 
+			ofsP<<"BAvg_S" <<setw(6)    				<<   "\t";
+			ofsP<<"B_"<<nyr+2<<"BAvg_S" <<setw(6)     	<<   "\t";		   //want probability Blast<Bavg 
+			ofsP<<"FAvg_S" <<setw(6)     				<<   "\t";	
+			ofsP<<"F_"<<nyr+1<<"FAvg_S"<<setw(6)   		<<   "\t";	
 			//Historical ref points "long"	 1956-2012
-			ofsP<<"BAvg_L" <<setw(6)     <<   "\t";
-			ofsP<<"B_"<<nyr+2<<"BAvg_L" <<setw(6)     <<   "\t";		   //want probability B2015<Bavg - this will be < 1 if true
-			ofsP<<"FAvg_L" <<setw(6)     <<   "\t";
-			ofsP<<"F_"<<nyr+1<<"FAvg_L\n";		   //want probability F2014>F2013 - this will be > 1 if true
+			ofsP<<"BAvg_L" <<setw(6)     				<<   "\t";
+			ofsP<<"B_"<<nyr+2<<"BAvg_L" <<setw(6)    	<<   "\t";		   //want probability B2015<Bavg - this will be < 1 if true
+			ofsP<<"FAvg_L" <<setw(6)     				<<   "\t";
+			ofsP<<"F_"<<nyr+1<<"FAvg_L\n";		   //want probability Flast-1>Flast-2 - this will be > 1 if true
 		      
 			cout<<"Running MCMC evaluations"<<endl;
 			cout<<"Bo when nf==1 \t"<<bo<<endl;
