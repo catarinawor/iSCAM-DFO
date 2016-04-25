@@ -6253,7 +6253,7 @@ FUNCTION void slow_msy(dvector& ftest, dvector& ye, dvector& be, double& msy, do
 	LOG<<msy<<'\n';
 	LOG<<fmsy<<'\n';
 	LOG<<bmsy<<'\n';
-FUNCTION void ddiff_msy(dvector& ftest, dvector& ye, dvector& be, double& msy, double& fmsy, double& bmsy )
+FUNCTION void ddiff_msy(dvector& ftest, dvector& ye, dvector& be, dvector& msy, dvector& fmsy, dvector& bmsy )
 	
 	int k ;
 	int NF=size_count(ftest);
@@ -6261,55 +6261,75 @@ FUNCTION void ddiff_msy(dvector& ftest, dvector& ye, dvector& be, double& msy, d
 	be.initialize();
 	
 	
-	dvariable rec_a;
-	dvariable rec_b;
+	//dvariable rec_a;
+	//dvariable rec_b;
 	
-	dvariable M;
+	//dvariable M;
 	//double M = value(m);
-	rec_a=value(so(1));
-	rec_b=value(beta(1));
+	//rec_a=value(so(g));
+	//rec_b=value(beta(g));
 	
 	//int f,g,h,ih,gs;
 	// Calculate equilibrium survivorship as function of FMSY
-	for(k=1; k<=NF; k++)
+
+	int ig,g;
+	for( ig=1;ig<=n_ags;ig++)
 	{
-		double se; //survival in equilibrium
-		double we; //average weight in equilibrium
-				
-			se = exp(-value(M_dd(1)(nyr)) - ftest(k));
-			we = (se*alpha_g(1)+wk(1) *(1.-se))/(1.-rho_g(1)*se);
+		
+		//f  = n_area(ig);
+		g  = n_group(ig);
+		//h  = n_sex(ig);
+		//ih = pntr_ag(f,g);
+		//gs = pntr_gs(g,h);
+
+		ye.initialize();
+		be.initialize();
+	
+		dvariable rec_a;
+		dvariable rec_b;
+	
+		rec_a=value(so(g));
+		rec_b=value(beta(g));
+
+		dvariable M;
+
+		M = value(M_dd(ig)(nyr));
+
+		for(k=1; k<=NF; k++)
+		{
+			double se; //survival in equilibrium
+			double we; //average weight in equilibrium
+			
+
+			se = exp(- value(M_dd(ig)(nyr)) - ftest(k));
+			we = (se*alpha_g(ig)+wk(ig) *(1.-se))/(1.-rho_g(ig)*se);
 			
 			
-			be(k) = value(-1.*((-we + se*alpha_g(1) + se*rho_g(1)*we + wk(1)*rec_a*we)/(rec_b*(-we + se*alpha_g(1) + se*rho_g(1)*we)))); //Martell
-			
-			M = value(M_dd(1)(nyr));
-			
+			be(k) = value(-1.*((-we + se*alpha_g(ig) + se*rho_g(ig)*we + wk(ig)*rec_a*we)/(rec_b*(-we + se*alpha_g(ig) + se*rho_g(ig)*we)))); //Martell
+					
 			ye(k)   = value(be(k)*(1.0-mfexp(-ftest(k)-M))*(ftest(k)/(ftest(k)+M)));
 		  	
 		  	if(ye(k)<0) ye(k)=0.;
 		  	if(be(k)<0) be(k)=0.;
-	}
+		}
 		 
 	
-	double mtest;	
+		double mtest;	
 	
-		msy=max(ye);
+		msy(g)=max(ye);
 			
 		for(k=1; k<=NF; k++)
 		{
 			mtest=ye(k);
 				
-			if(mtest==msy){
-				fmsy=ftest(k);
-				bmsy=be(k);
+			if(mtest==msy(g)){
+				fmsy(g)=ftest(k);
+				bmsy(g)=be(k);
 			} 
 		}
-	  	
+	 }	
 	
-	cout<<"Slow msy calcs"<<endl;
-	cout<<"msy"<<msy<<endl;
-	cout<<"fmsy"<<fmsy<<endl;
-	cout<<"bmsy"<<bmsy<<endl; 
+	
 	
 	
 	
@@ -6350,36 +6370,60 @@ FUNCTION void run_FRP()
 	ofsr<<"Be"<<'\n'<<Be<<'\n';	
 FUNCTION void run_FRPdd()
 	
-	
-	if(n_ags>1){
-		cout<<"MSY quantities not defined for n_ags>1"<<endl; 
+	// WARNING: THE ROUTINE WITH MULTIPLE GROUPS HAS NOT BEEN TESTED YET
+	if(n_ags>ngroup){
+		cout<<"MSY quantities not defined for n_ags>ngroup"<<endl; 
 	}else{
+	
+	//dmatrix ftest(1,ngroup,1,101);
 	dvector ftest(1,101);
 	ftest.fill_seqadd(0,0.01);
 	
-	int Nf;
-	Nf=size_count(ftest);
+	//dvector ftmp(1,101);
+	//ftmp.fill_seqadd(0,0.01);
+
+
+	//int Nf;
+	//Nf=size_count(ftest);
 	
 		
-	for(int g=1; g<=ngroup; g++)
-	{
+	
+		//ftest(g)= ftmp;
 		//dvector Ye(1,Nf); // i think this should be a matrix by group and gear
 		//Matrix for putting numerically derived equilibrium catches for calculating MSY and FMSY (in R)
 		//dvector Be(1,Nf); // i think this should be a matrix by group
 		//Matrix for putting numerically derived equilibrium catches for calculating MSY and FMSY (in R)
+		int Nf;
+		Nf=size_count(ftest);
 	
-		dvector ye(1,Nf); // i think this should be a matrix by group and gear
+		dvector ye(1,Nf); // I think this should be a matrix by group and gear
 		dvector be(1,Nf);
 		//double fmsy;
 		//double msy;
 		//double bmsy;
-		ddiff_msy(ftest, ye, be, msy(g,1), fmsy(g,1), bmsy(g));
-		//Fmsy=fmsy;
+		dvector ddmsy(1,ngroup);
+		dvector ddfmsy(1,ngroup);
+
+
+		ddiff_msy(ftest, ye, be, ddmsy, ddfmsy, bmsy);
+		
+		
+		for(int g=1; g<=ngroup; g++)
+		{
+			msy(g)(1) = ddmsy(g);
+			fmsy(g)(1) = ddfmsy(g);
+		}
+		//Fmsy=fmsy;)
 		//MSY=msy;
 		//Bmsy=bmsy;
 		//Ye(g)=ye(g);
 		//Be(g)=be(g);
-	}
+
+		cout<<"Slow msy calcs"<<endl;
+		cout<<"msy"<<msy<<endl;
+		cout<<"fmsy"<<fmsy<<endl;
+		cout<<"bmsy"<<bmsy<<endl; 
+	
 	}
 	
 	
